@@ -1,0 +1,18 @@
+[Unit]
+Description=Bio-Planner (:18561)
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+WorkingDirectory=/data/projects/planner
+EnvironmentFile=%h/.config/bioradar/planner.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/data/projects/planner/.venv/bin/uvicorn planner.service:app --host 127.0.0.1 --port 18561
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=120
+KillMode=control-group
+UMask=0077
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,23 @@
+# Built-in models (same ids and endpoints as the old WeKnora; the fabric bridge pins these ids).
+builtin_models:
+  - id: builtin-embedding-default
+    type: Embedding
+    source: remote
+    is_default: true
+    name: BAAI/bge-m3
+    parameters:
+      base_url: http://172.20.72.25:8001/v1
+      api_key: ""
+      provider: generic
+      embedding_parameters:
+        dimension: 1024
+        truncate_prompt_tokens: 0
+  - id: builtin-rerank-default
+    type: Rerank
+    source: remote
+    is_default: true
+    name: bge-reranker-v2-m3
+    parameters:
+      base_url: http://172.20.72.25:8002/v1
+      api_key: ""
+      provider: generic

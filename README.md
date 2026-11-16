@@ -17,6 +17,7 @@
 |---|---|
 | `postgres/` | PostgreSQL 17 的参数（`zk.conf`，放 `/etc/postgresql/17/main/conf.d/`） |
 | `weknora/` | WeKnora 检索服务和 Neo4j，用官方镜像 |
+| `systemd/` | 各服务的 systemd 用户单元（见下文） |
 
 ## PostgreSQL 17
 
@@ -28,12 +29,43 @@
 
 见 `weknora/README.md`。启动：`cd weknora && docker compose --profile neo4j up -d`。
 
-## 启动顺序（待补全）
+## 启动顺序
 
-1. PostgreSQL、Redis（系统服务，开机自启）
-2. WeKnora（docker compose）
-3. fabric（API、抓取调度、发布）→ fabric 的 WeKnora 桥接
-4. Atlas、BioCheck、MechEvidence、planner
-5. BioRadar
+1. PostgreSQL 17、Redis（系统服务，开机自启）
+2. WeKnora（docker compose，`--profile neo4j`）
+3. fabric：`datafabric-api` → `datafabric-weknora`（桥接）→ `datafabric-fetch-worker`、`datafabric-scheduler`、`datafabric-clean`、`datafabric-index`
+4. Atlas（`atlas-api`、`atlas-pull`）、`bioradar-biocheck`、`bioradar-mechevidence`、`bioradar-planner`
+5. BioRadar：`bioradar-api`、`bioradar-worker`、`bioradar-monitor`
 
-各服务的 systemd 配置以后统一放到这里的 `systemd/`。监控（Prometheus、Grafana、Loki、告警）以后放 `monitoring/`。
+## systemd（用户单元，账号 zk_admin）
+
+`systemd/` 里是全部单元。装法：
+
+```bash
+loginctl enable-linger zk_admin                     # 不登录也常驻（已开）
+cp systemd/*.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now <单元名>               # 按上面的顺序
+journalctl --user -u <单元名> -f                     # 看日志
+```
+
+| 单元 | 端口（127.0.0.1） | 配置文件（权限 600） |
+|---|---|---|
+| datafabric-api | 18511 | `~/.config/datafabric-publication/runtime.env` |
+| datafabric-scheduler、fetch-worker、clean、index | — | 同上 |
+| datafabric-weknora（桥接） | 18564 | `~/.config/weknora-kdd/runtime.json` |
+| atlas-api | 8100 | `~/.config/atlas/atlas.env` |
+| atlas-pull | — | 同上 |
+| bioradar-planner | 18561 | `~/.config/bioradar/planner.env` |
+| bioradar-biocheck | 18562 | `~/.config/bioradar/biocheck.env` |
+| bioradar-mechevidence | 18563 | `~/.config/bioradar/mechevidence.env` |
+| bioradar-api | 18100 | `~/.config/bioradar/radar.env` |
+| bioradar-worker、monitor | — | 同上 |
+
+几条约定：
+
+- 服务之间的令牌一处生成、两边一致：fabric 读令牌（fabric → Atlas、BioRadar）、桥接令牌（`WEKNORA_KDD_TOKEN` = runtime.json 的 `token`）、planner / BioCheck / MechEvidence 各自的 `SERVICE_TOKEN`（= radar.env 里对应的 `*_TOKEN`）。
+- WeKnora 里的账号、API Key、知识库、模型编号记在 `~/.config/weknora-kdd/weknora-setup.json`。
+- fabric 抓取走本机代理（runtime.env 的 `HTTPS_PROXY`），本机、内网模型和 DeepSeek 在 `NO_PROXY` 里直连。
+- BioRadar 用本机 PostgreSQL 的 `bioradar` 库（账号 bioradar）和系统 Redis 的 5 号库；建表：`PYTHONPATH=services .venv/bin/alembic -c db/alembic.ini upgrade head`。
+- fabric 附件解析（`python -m run.attachments --loop`）和雷达前端目前没有单元，没起。

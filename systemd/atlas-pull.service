@@ -1,0 +1,18 @@
+[Unit]
+Description=Atlas pull from fabric
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+WorkingDirectory=/data/projects/atlas
+EnvironmentFile=%h/.config/atlas/atlas.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/data/projects/atlas/.venv/bin/python -m pull.service
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=120
+KillMode=control-group
+UMask=0077
+
+[Install]
+WantedBy=default.target

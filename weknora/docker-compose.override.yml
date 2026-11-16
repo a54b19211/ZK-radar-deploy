@@ -3,3 +3,6 @@ services:
   postgres:
     ports: !override
       - "127.0.0.1:15432:5432"
+  app:
+    volumes:
+      - ./config/builtin_models.yaml:/app/config/builtin_models.yaml:ro

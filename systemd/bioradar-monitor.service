@@ -1,0 +1,19 @@
+[Unit]
+Description=BioRadar monitor and recovery loop
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+WorkingDirectory=/data/projects/BioRadar
+EnvironmentFile=%h/.config/bioradar/radar.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/data/projects/BioRadar/services
+ExecStart=/data/projects/BioRadar/.venv/bin/python -m bioradar.ops monitor
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=120
+KillMode=control-group
+UMask=0077
+
+[Install]
+WantedBy=default.target

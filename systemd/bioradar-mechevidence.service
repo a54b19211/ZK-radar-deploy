@@ -1,0 +1,18 @@
+[Unit]
+Description=MechEvidence (:18563)
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+WorkingDirectory=/data/projects/MechEvidence
+EnvironmentFile=%h/.config/bioradar/mechevidence.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/data/projects/MechEvidence/.venv/bin/uvicorn mechevidence.service:app --host 127.0.0.1 --port 18563
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=120
+KillMode=control-group
+UMask=0077
+
+[Install]
+WantedBy=default.target
