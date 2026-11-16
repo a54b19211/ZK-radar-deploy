@@ -27,7 +27,7 @@
 
 ## WeKnora
 
-见 `weknora/README.md`。启动：`cd weknora && docker compose --profile neo4j up -d`。
+WeKnora 在 `/data/projects/deploy/weknora` 运行（`.env` 和 `skills/preloaded` 只在服务器上，不进仓库），见 `weknora/README.md`。启动：`cd weknora && docker compose --profile neo4j up -d`。
 
 ## 启动顺序
 
