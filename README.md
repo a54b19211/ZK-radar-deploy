@@ -33,7 +33,7 @@ WeKnora 在 `/data/projects/deploy/weknora` 运行（`.env` 和 `skills/preloade
 
 1. PostgreSQL 17、Redis（系统服务，开机自启）
 2. WeKnora（docker compose，`--profile neo4j`）
-3. fabric：`datafabric-api` → `datafabric-weknora`（桥接）→ `datafabric-fetch-worker`、`datafabric-scheduler`、`datafabric-clean`、`datafabric-index`
+3. fabric：`datafabric-api` → `datafabric-weknora`（桥接）→ `datafabric-fetch-worker`、`datafabric-scheduler`、`datafabric-clean`、`datafabric-index`、`datafabric-attachments`（附件文字，MinerU 云端）
 4. Atlas（`atlas-api`、`atlas-pull`）、`bioradar-biocheck`、`bioradar-mechevidence`、`bioradar-planner`
 5. BioRadar：`bioradar-api`、`bioradar-worker`、`bioradar-monitor`
 
