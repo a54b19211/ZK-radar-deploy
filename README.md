@@ -65,7 +65,7 @@ journalctl --user -u <单元名> -f                     # 看日志
 几条约定：
 
 - 服务之间的令牌一处生成、两边一致：fabric 读令牌（fabric → Atlas、BioRadar）、桥接令牌（`WEKNORA_KDD_TOKEN` = runtime.json 的 `token`）、planner / BioCheck / MechEvidence 各自的 `SERVICE_TOKEN`（= radar.env 里对应的 `*_TOKEN`）。
-- WeKnora 里的账号、API Key、知识库、模型编号记在 `~/.config/weknora-kdd/weknora-setup.json`。
-- fabric 抓取走本机代理（runtime.env 的 `HTTPS_PROXY`），本机、内网模型和 DeepSeek 在 `NO_PROXY` 里直连。
+- WeKnora 里的账号、API Key、模型编号记在 `~/.config/weknora-kdd/weknora-setup.json`。知识库按资料类型分成十个（试验登记、药品说明书、中国监管公告、美欧监管公告、政策与指南长文、已发表论文、预印本、公司定期报告、公司公告与新闻稿、线索）：每个库的分块方式、fabric 各来源进哪个库、抽样上限都写在 `weknora/knowledge_bases.py`（`create` 建库，`configure` 改 fabric 和桥接的私有配置），库的编号记在 `~/.config/weknora-kdd/knowledge-bases.json`。
+- fabric 抓取走本机代理（runtime.env 的 `HTTPS_PROXY`），本机、内网模型、DeepSeek 和国内站点（`.gov.cn`、`.org.cn`、`.phirda.com`）在 `NO_PROXY` 里直连。定时抓哪些来源写在 fabric 的 `fetch/catalog.py · WATCHES`，runtime.env 里不再有 `DATAFABRIC_WATCHES`。
 - BioRadar 用本机 PostgreSQL 的 `bioradar` 库（账号 bioradar）和系统 Redis 的 5 号库；建表：`PYTHONPATH=services .venv/bin/alembic -c db/alembic.ini upgrade head`。
-- fabric 附件解析（`python -m run.attachments --loop`）和雷达前端目前没有单元，没起。
+- 雷达前端目前没有单元，没起。
