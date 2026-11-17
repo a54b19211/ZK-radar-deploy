@@ -27,10 +27,12 @@ def chunking(size, overlap=0, parent_child=None):
     return config
 
 
-# (范围名, 知识库名, 说明, 分块)。短公告、论文摘要尽量一篇一块；长文按标题切成约 1500 字；说明书用父子块
+# (范围名, 知识库名, 说明, 分块)。短公告、论文摘要尽量一篇一块；长文按标题切成约 1500 字
 KBS = [
     ("trials", "试验登记", "ClinicalTrials.gov、中国临床试验注册中心的登记", chunking(1500)),
-    ("labels", "药品说明书", "openFDA 药品说明书（drug/label）", chunking(500, 0, (4000, 500))),
+    # 说明书先试过父子块（父 4000 / 子 500）：WeKnora 这个版本对没再切开的独立小块不生成向量（100 篇里 8 篇、12 块），
+    # 这些文档永远到不了“全部有向量”，所以改成和试验登记一样按小节平切；父子块等查清再说
+    ("labels", "药品说明书", "openFDA 药品说明书（drug/label）", chunking(1500)),
     ("cn_regulatory", "中国监管公告", "国家药监局、药审中心的公告和信息公开", chunking(4000)),
     ("us_eu_regulatory", "美欧监管公告", "FDA 完整回应函、召回、安全通讯、新闻稿，EMA 新闻", chunking(4000)),
     ("guidance", "政策与指南长文", "药审中心指导原则、药促会政策法规等长文", chunking(1500, 150)),
@@ -73,6 +75,12 @@ def create():
             if answer.status_code not in (200, 201):
                 raise SystemExit("建库失败 %s: HTTP %s %s" % (name, answer.status_code, answer.text[:300]))
             kb = answer.json()["data"]
+        elif kb.get("chunking_config") != config:  # 这里改了分块方式：同步到 WeKnora（只对之后入库的文档生效）
+            answer = client.put("/knowledge-bases/" + kb["id"], json={
+                "name": name, "description": description, "config": {"chunking_config": config}})
+            if answer.status_code != 200:
+                raise SystemExit("改分块失败 %s: HTTP %s %s" % (name, answer.status_code, answer.text[:300]))
+            kb = client.get("/knowledge-bases/" + kb["id"]).json()["data"]
         out[scope] = {"id": kb["id"], "name": name}
         print(scope, kb["id"], name, json.dumps(kb.get("chunking_config"), ensure_ascii=False))
     with open(os.open(IDS, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as stream:
